@@ -1,0 +1,28 @@
+# === CONFIGURATION GIT GLOBALE ===
+
+# Force les fichiers texte à utiliser des fins de ligne UNIX (LF)
+* text eol=lf
+
+# Encodage par défaut UTF-8 pour éviter les problèmes d’accents
+*.py text working-tree-encoding=UTF-8
+*.html text working-tree-encoding=UTF-8
+*.txt text working-tree-encoding=UTF-8
+*.md text working-tree-encoding=UTF-8
+*.json text working-tree-encoding=UTF-8
+*.yml text working-tree-encoding=UTF-8
+
+# Traite les notebooks comme du texte pour éviter les diffs binaires
+*.ipynb text
+
+# Ignore les fichiers binaires (pas de diff inutile)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.keras binary
+*.h5 binary
+*.weights binary
+
+# Garde les permissions d’exécution sur les scripts
+*.sh text eol=lf

@@ -1,0 +1,67 @@
+# === FICHIERS SYSTÈMES (macOS, Windows, etc.) ===
+.DS_Store
+Thumbs.db
+
+# === FICHIERS PYTHON ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+*.db
+
+# === ENVIRONNEMENTS VIRTUELS ===
+venv/
+.env/
+.venv/
+fv-seg/
+env/
+ENV/
+
+# === DONNÉES LOURDES ===
+data/
+datasets/
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# === MODÈLES TENSORFLOW / KERAS ===
+*.h5
+*.keras
+*.ckpt
+*.pb
+*.tflite
+*.weights
+
+# === NOTEBOOKS CACHE ===
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# === RÉSULTATS TEMPORAIRES ===
+results/
+output/
+tmp/
+temp/
+
+# === CONFIG LOCALES ===
+*.vscode/
+.vscode/
+.idea/
+
+# === FICHIERS PERSONNELS ===
+dossier sans titre/
+Gemini_Generated_Image_*.png
+
+# === RENDUS / LIVRABLES ===
+*.pdf
+*.pptx
+*.docx
+*.rtf
+
+# === AUTRES ===
+__MACOSX/
+*.bak
+*.swp
