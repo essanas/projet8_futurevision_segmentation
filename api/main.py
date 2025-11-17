@@ -1,17 +1,33 @@
-# api/main.py
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import HTMLResponse, Response, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-
-import uvicorn, io
+import requests
+import uvicorn
+import io
 import numpy as np
 from PIL import Image
 from tensorflow.keras import models
+import os
 
 # --- Constantes ---
 NB_CLASSES = 8
 TAILLE_IMAGE = (256, 512)  # (H, W)
-CHEMIN_MODELE = "/Users/anasesseddiki/Desktop/Projet8/models/deeplabv3p_mnv2_full.keras"
+
+# --- Télécharger le modèle depuis GitHub si nécessaire ---
+MODEL_URL = "https://github.com/essanas/projet8_futurevision_segmentation/raw/main/models/deeplabv3p_mnv2_full.keras"
+MODEL_PATH = "/tmp/deeplabv3p_mnv2_full.keras"  # Emplacement temporaire pour Render
+
+# Fonction pour télécharger le modèle
+def download_model():
+    response = requests.get(MODEL_URL)
+    if response.status_code == 200:
+        with open(MODEL_PATH, "wb") as f:
+            f.write(response.content)
+    else:
+        raise Exception("Erreur lors du téléchargement du modèle depuis GitHub")
+
+# Télécharger le modèle au démarrage de l'application
+download_model()
 
 # --- Application FastAPI ---
 app = FastAPI(
@@ -40,7 +56,7 @@ async def no_cache(request, call_next):
 
 # --- Chargement du modèle ---
 modele = models.load_model(
-    CHEMIN_MODELE,
+    MODEL_PATH,
     custom_objects={"dice_soft_macro": lambda y_true, y_pred: 0.0},
     compile=False,
 )
@@ -237,7 +253,7 @@ def page_principale():
 def etat():
     return {
         "statut": "opérationnel",
-        "modele": CHEMIN_MODELE,
+        "modele": MODEL_PATH,
         "taille_image": TAILLE_IMAGE,
         "nombre_de_classes": NB_CLASSES,
     }
@@ -271,6 +287,4 @@ async def predire(fichier: UploadFile = File(...)):
         return JSONResponse({"erreur": str(e)}, status_code=400)
 
 if __name__ == "__main__":
-    # Démarrage du serveur
-    # Commande : cd /Users/anasesseddiki/Desktop/Projet8/api && conda activate fv-seg && uvicorn main:app --reload
     uvicorn.run(app, host="0.0.0.0", port=8000)
