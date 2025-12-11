@@ -7,24 +7,28 @@ import io
 import numpy as np
 from PIL import Image
 from tensorflow.keras import models
-import os
 
 # --- Constantes ---
 NB_CLASSES = 8
 TAILLE_IMAGE = (256, 512)  # (H, W)
 
 # --- Télécharger le modèle depuis GitHub si nécessaire ---
-MODEL_URL = "https://github.com/essanas/projet8_futurevision_segmentation/raw/main/models/deeplabv3p_mnv2_full.keras"
-MODEL_PATH = "/tmp/deeplabv3p_mnv2_full.keras"  # Emplacement temporaire pour Render
+MODEL_URL = (
+    "https://github.com/essanas/projet8_futurevision_segmentation/"
+    "raw/main/models/unet_mobilenetv2_8c_fast.keras"
+)
+MODEL_PATH = "/tmp/unet_mobilenetv2_8c_fast.keras"  # Emplacement temporaire (ex : Render)
 
-# Fonction pour télécharger le modèle
+
 def download_model():
+    """Télécharge le modèle depuis GitHub si nécessaire."""
     response = requests.get(MODEL_URL)
     if response.status_code == 200:
         with open(MODEL_PATH, "wb") as f:
             f.write(response.content)
     else:
         raise Exception("Erreur lors du téléchargement du modèle depuis GitHub")
+
 
 # Télécharger le modèle au démarrage de l'application
 download_model()
@@ -33,7 +37,10 @@ download_model()
 app = FastAPI(
     title="FutureVision - API de segmentation d'images",
     version="1.0",
-    description="Interface et API pour segmenter des images avec le modèle DeepLabV3+ MobileNetV2."
+    description=(
+        "Interface et API pour segmenter des images avec le modèle "
+        "UNet-MobileNetV2 (8 classes)."
+    ),
 )
 
 # --- CORS (pour autoriser les appels depuis le navigateur) ---
@@ -57,8 +64,9 @@ async def no_cache(request, call_next):
 # --- Chargement du modèle ---
 modele = models.load_model(
     MODEL_PATH,
+    # stub pour la métrique custom utilisée à l'entraînement
     custom_objects={"dice_soft_macro": lambda y_true, y_pred: 0.0},
-    compile=False,
+    compile=False,  # pas besoin de loss/metrics pour l'inférence
 )
 
 # --- Palette couleur pour les 8 classes ---
@@ -184,8 +192,8 @@ PAGE_HTML = """<!DOCTYPE html>
 </head>
 <body>
     <header>
-        <h1>Future Vision Transport </h1>
-        <p>Segmentation sémantique des scènes urbaines avec DeepLabV3+ MobileNetV2</p>
+        <h1>Future Vision Transport</h1>
+        <p>Segmentation sémantique des scènes urbaines avec UNet-MobileNetV2 (8 classes)</p>
     </header>
     <div class="card">
         <label for="file-upload" class="upload-btn">📂 Choisir une image</label>
@@ -249,6 +257,7 @@ PAGE_HTML = """<!DOCTYPE html>
 def page_principale():
     return PAGE_HTML
 
+
 @app.get("/etat")
 def etat():
     return {
@@ -258,13 +267,19 @@ def etat():
         "nombre_de_classes": NB_CLASSES,
     }
 
+
 def pretraiter_image(pil_img: Image.Image) -> np.ndarray:
+    """Prétraitement de l'image d'entrée pour le modèle."""
     pil_img = pil_img.convert("RGB")
+    # PIL attend (width, height)
     pil_img = pil_img.resize((TAILLE_IMAGE[1], TAILLE_IMAGE[0]), Image.BILINEAR)
     arr = np.asarray(pil_img, dtype=np.float32) / 255.0
+    # ajout de la dimension batch : (1, H, W, 3)
     return arr[None, ...]
 
+
 def masque_vers_png_couleur(masque_2d: np.ndarray) -> bytes:
+    """Convertit un masque 2D d'indices de classes en PNG couleur."""
     masque_2d = masque_2d.astype(np.int32)
     masque_2d = np.clip(masque_2d, 0, len(PALETTE) - 1)
     masque_rgb = PALETTE[masque_2d]
@@ -272,6 +287,7 @@ def masque_vers_png_couleur(masque_2d: np.ndarray) -> bytes:
     tampon = io.BytesIO()
     image_sortie.save(tampon, format="PNG", optimize=True)
     return tampon.getvalue()
+
 
 @app.post("/predire")
 async def predire(fichier: UploadFile = File(...)):
@@ -285,6 +301,7 @@ async def predire(fichier: UploadFile = File(...)):
         return Response(content=png_bytes, media_type="image/png")
     except Exception as e:
         return JSONResponse({"erreur": str(e)}, status_code=400)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
